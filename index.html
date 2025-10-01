@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Text Summarizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="importmap">
+      { 
+        "imports": { 
+          "@google/genai": "https://aistudiocdn.com/@google/genai@^1.21.0"
+        }
+      }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-3xl bg-white p-8 rounded-2xl shadow-lg">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900">AI Text Summarizer</h1>
+            <p class="text-slate-500 mt-2">Paste your text below and let AI create a concise summary for you.</p>
+        </div>
+
+        <div class="space-y-4">
+            <div>
+                <label for="text-input" class="block text-sm font-medium text-slate-700 mb-1">Your Text</label>
+                <textarea id="text-input" rows="12" class="w-full p-4 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out" placeholder="Paste a long article, report, or document here..."></textarea>
+            </div>
+            
+            <button id="summarize-btn" class="w-full flex justify-center items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-slate-400 disabled:cursor-not-allowed transition-all duration-200 ease-in-out">
+                <svg id="summarize-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM5 9a1 1 0 000 2h10a1 1 0 100-2H5z" clip-rule="evenodd" />
+                </svg>
+                <span id="summarize-btn-text">Summarize Text</span>
+            </button>
+
+            <div id="error-output" class="text-red-500 text-sm text-center"></div>
+
+            <div id="summary-container" class="hidden pt-4">
+                <div class="border-t border-slate-200 my-4"></div>
+                <h2 class="text-2xl font-bold text-slate-900 mb-3">Summary</h2>
+                <div id="summary-output" class="p-4 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 whitespace-pre-wrap"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { GoogleGenAI } from "@google/genai";
+
+        const API_KEY = 'AIzaSyDjzmxiuKl5O9VsSjmsc_GITwCy-c66SHs';
+
+        const textInput = document.getElementById('text-input');
+        const summarizeBtn = document.getElementById('summarize-btn');
+        const summarizeBtnText = document.getElementById('summarize-btn-text');
+        const errorOutput = document.getElementById('error-output');
+        const summaryContainer = document.getElementById('summary-container');
+        const summaryOutput = document.getElementById('summary-output');
+
+        summarizeBtn.addEventListener('click', async () => {
+            const textToSummarize = textInput.value.trim();
+
+            if (!textToSummarize) {
+                errorOutput.textContent = 'Please enter some text to summarize.';
+                return;
+            }
+
+            if (!API_KEY) {
+                errorOutput.textContent = 'Error: Gemini API Key is not configured.';
+                return;
+            }
+
+            // --- Set Loading State ---
+            summarizeBtn.disabled = true;
+            summarizeBtnText.textContent = 'Summarizing...';
+            errorOutput.textContent = '';
+            summaryContainer.classList.add('hidden');
+
+            try {
+                const ai = new GoogleGenAI({ apiKey: API_KEY });
+                const prompt = `Please provide a concise and comprehensive summary of the following text. Focus on the key points and main arguments. The summary should be easy to understand for someone who has not read the original text.\n\nText:\n"""\n${textToSummarize}\n"""`;
+
+                const result = await ai.models.generateContent({
+                    model: 'gemini-2.5-flash',
+                    contents: prompt,
+                });
+
+                const summary = result.text;
+                summaryOutput.textContent = summary;
+                summaryContainer.classList.remove('hidden');
+
+            } catch (e) {
+                const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred. Please check the console for details.';
+                errorOutput.textContent = `Error: ${errorMessage}`;
+                console.error(e);
+            } finally {
+                // --- Reset UI State ---
+                summarizeBtn.disabled = false;
+                summarizeBtnText.textContent = 'Summarize Text';
+            }
+        });
+    </script>
+
+    <div style="position: fixed; bottom: 16px; right: 16px; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 6px 12px; border-radius: 9999px; font-size: 12px; color: #333; border: 1px solid rgba(0, 0, 0, 0.1); box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000;">Built with ⚡️ Silo Build 2.0</div>
+</body>
+</html>
